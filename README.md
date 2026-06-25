@@ -2,3 +2,6 @@ gsettings set org.gnome.shell enabled-extensions "['background-logo@fedorahosted
 
 
 ls ~/.local/share/gnome-shell/extensions/ | grep days-to-expire
+
+
+rm -rf ~/.local/share/gnome-shell/extensions/v2-days-to-expire@itau.corp
