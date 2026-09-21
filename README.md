@@ -1,9 +1,4 @@
 
-ls -la ~/.local/lib/node_modules/@anthropic-ai/claude-code/bin/
-chmod +x ~/.local/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe
-hash -r
-claude --version
+find ~ -maxdepth 6 -name 'devin*' -not -path '*/node_modules/*/node_modules/*' 2>/dev/null
 
-cd ~/.local/lib/node_modules/@anthropic-ai/claude-code
-node install.cjs
-chmod +x bin/claude.exe
+ls ~/.nvm/versions/node/; nvm ls; grep -i prefix ~/.npmrc; npm config get prefix; ls ~/.sand/bin
