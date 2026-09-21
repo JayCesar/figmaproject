@@ -1,4 +1,4 @@
+ls -la ~/.local/bin | head -30
+devin auth status 2>&1 | head -3
 
-find ~ -maxdepth 6 -name 'devin*' -not -path '*/node_modules/*/node_modules/*' 2>/dev/null
 
-ls ~/.nvm/versions/node/; nvm ls; grep -i prefix ~/.npmrc; npm config get prefix; ls ~/.sand/bin
