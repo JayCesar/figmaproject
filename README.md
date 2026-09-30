@@ -1,4 +1,7 @@
-ls -la ~/.local/bin | head -30
-devin auth status 2>&1 | head -3
+type -a claude
+ls -l "$(command -v claude)"
+readlink -f "$(command -v claude)"
+mount | grep -E "$(df --output=target "$(readlink -f "$(command -v claude)")" | tail -1)"
+
 
 
