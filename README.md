@@ -1,7 +1,15 @@
-type -a claude
-ls -l "$(command -v claude)"
-readlink -f "$(command -v claude)"
-mount | grep -E "$(df --output=target "$(readlink -f "$(command -v claude)")" | tail -1)"
+## Comando para p zsh
 
+```sh
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+bindkey '^[[Z' reverse-menu-complete    # Shift+TAB volta no menu
+```
 
-
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+bindkey '^[[Z' reverse-menu-complete    # Shift+TAB volta no menu
