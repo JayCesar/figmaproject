@@ -1,16 +1,8 @@
 ## Comando para p zsh
 
 ```sh
-mkdir -p ~/.ssh && chmod 700 ~/.ssh
-cat >> ~/.ssh/config <<'EOF'
-Host github.com
-  Hostname ssh.github.com
-  Port 443
-  User git
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
-EOF
-chmod 600 ~/.ssh/config
+LD_LIBRARY_PATH=/home/jccbzlf/settings/softwares/libs/usr/lib64 /home/jccbzlf/settings/softwares/anki/anki-26.9.3-linux-x86_64.tar/anki
+
 
 ```
 
