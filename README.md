@@ -8,6 +8,9 @@ anki() {
   LD_LIBRARY_PATH=/home/jccbzlf/settings/softwares/libs/usr/lib64 nohup /home/jccbzlf/settings/softwares/anki/anki-26.9.3-linux-x86_64.tar/anki "$@" >/dev/null 2>&1 &!
 }
 
+watch -n 1 -d 'uptime; echo; free -h; echo; df -h / /home'
+
+
 ```
 
 
