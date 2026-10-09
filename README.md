@@ -10,6 +10,7 @@ anki() {
 
 watch -n 1 -d 'uptime; echo; free -h; echo; df -h / /home'
 
+javascript:(function(){var s=document.documentElement.style;s.filter=s.filter?'':'invert(1) hue-rotate(180deg)';})()
 
 ```
 
