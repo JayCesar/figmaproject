@@ -15,8 +15,28 @@ javascript:(function(){var s=document.documentElement.style;s.filter=s.filter?''
 ```
 
 
-autoload -Uz compinit && compinit
-zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
-bindkey '^[[Z' reverse-menu-complete    # Shift+TAB volta no menu
+## Mudar opactidade:
+
+```sh
+base=org.gnome.settings-daemon.plugins.media-keys
+caminho=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/flameshot/
+
+gsettings set $base custom-keybindings "['$caminho']"
+gsettings set $base.custom-keybinding:$caminho name 'Flameshot'
+gsettings set $base.custom-keybinding:$caminho command 'flameshot gui'
+gsettings set $base.custom-keybinding:$caminho binding '<Super><Shift>s'
+```
+
+## Flaemshot (para conficuar o ctrl +c)
+
+```sh
+   mkdir -p ~/.config/flameshot
+   print -l '[Shortcuts]' 'TYPE_ACCEPT=Ctrl+C' 'TYPE_COPY=Ctrl+Shift+C' >> ~/.config/flameshot/flameshot.ini
+```
+
+## Mudar pasta de Downloads
+```
+brave://settings/downloads
+```
+
+
