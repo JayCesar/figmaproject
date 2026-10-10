@@ -1,0 +1,218 @@
+# Ferramentas de produtividade no terminal (PC do trabalho, com proxy)
+
+Instala fzf, zoxide, tldr, bat, ripgrep, fd, btop e delta numa máquina corporativa: atrás de proxy, sem `sudo` e sem depender do gerenciador de pacotes. Os binários vão para `~/.local/bin`, dentro da sua home.
+
+Antes de começar, vale confirmar se a política da empresa permite instalar ferramentas por conta própria e se existe um repositório interno (Artifactory, Nexus) com esses pacotes. Se existir, ele é o caminho preferido.
+
+## 1. Proxy
+
+Ver se o proxy já está configurado no ambiente:
+
+```zsh
+env | grep -i proxy
+```
+
+Se não aparecer nada, definir (trocar endereço e porta pelos da empresa):
+
+```zsh
+export HTTPS_PROXY=http://proxy.empresa.com:8080
+export HTTP_PROXY=$HTTPS_PROXY
+export https_proxy=$HTTPS_PROXY
+export http_proxy=$HTTPS_PROXY
+export NO_PROXY=localhost,127.0.0.1
+```
+
+Se o proxy exigir usuário e senha, o formato é `http://usuario:senha@proxy.empresa.com:8080`. Nesse caso, não gravar a senha no `.zshrc`: definir só na sessão, começando a linha com um espaço para ela não ir para o histórico.
+
+Testar a saída para o GitHub (deve responder `HTTP/2 200` ou `HTTP/1.1 200`):
+
+```zsh
+curl -sI https://github.com | head -1
+```
+
+### Erro de certificado
+
+Se aparecer `SSL certificate problem`, o proxy inspeciona o tráfego e o `curl` precisa do certificado da empresa. Apontar para o conjunto de certificados do sistema:
+
+```zsh
+export CURL_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
+```
+
+Não usar `curl -k` para contornar: isso desliga a verificação de segurança do download.
+
+## 2. Preparar a pasta de binários
+
+```zsh
+mkdir -p ~/.local/bin
+```
+
+Conferir se ela está no PATH (deve mostrar a pasta):
+
+```zsh
+echo $PATH | tr ':' '\n' | grep '.local/bin'
+```
+
+Se não mostrar, adicionar no `~/.zshrc` (ou `~/.bashrc`):
+
+```zsh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## 3. Função de instalação
+
+Colar no terminal. Ela busca a versão mais recente no GitHub, baixa o pacote, extrai e copia o binário para `~/.local/bin`:
+
+```zsh
+instala() {  # uso: instala dono/repo padrao-do-arquivo nome-do-binario
+  local repo="$1" padrao="$2" bin="$3" tmp url
+  tmp=$(mktemp -d)
+  url=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" |
+        grep browser_download_url | grep "$padrao\"" | head -1 | cut -d'"' -f4)
+  if [ -z "$url" ]; then
+    echo "não achei o pacote de $repo"
+    return 1
+  fi
+  echo "baixando $url"
+  curl -fsSL "$url" -o "$tmp/pacote" || return 1
+  if tar -xf "$tmp/pacote" -C "$tmp" 2>/dev/null; then
+    find "$tmp" -type f -name "$bin" -exec cp {} "$HOME/.local/bin/" \;
+  else
+    cp "$tmp/pacote" "$HOME/.local/bin/$bin"
+  fi
+  chmod +x "$HOME/.local/bin/$bin"
+  \rm -rf "$tmp"
+  "$HOME/.local/bin/$bin" --version
+}
+```
+
+Os pacotes escolhidos são as versões `musl`, que são estáticas e rodam em sistemas mais antigos sem depender das bibliotecas da máquina.
+
+## 4. Instalar as ferramentas
+
+```zsh
+instala junegunn/fzf 'linux_amd64.tar.gz' fzf
+```
+
+```zsh
+instala ajeetdsouza/zoxide 'x86_64-unknown-linux-musl.tar.gz' zoxide
+```
+
+```zsh
+instala tealdeer-rs/tealdeer 'tealdeer-linux-x86_64-musl' tldr
+```
+
+```zsh
+instala sharkdp/bat 'x86_64-unknown-linux-musl.tar.gz' bat
+```
+
+```zsh
+instala BurntSushi/ripgrep 'x86_64-unknown-linux-musl.tar.gz' rg
+```
+
+```zsh
+instala sharkdp/fd 'x86_64-unknown-linux-musl.tar.gz' fd
+```
+
+```zsh
+instala aristocratos/btop 'x86_64.*linux-musl.tbz' btop
+```
+
+```zsh
+instala dandavison/delta 'x86_64-unknown-linux-musl.tar.gz' delta
+```
+
+Cada comando termina mostrando a versão instalada. Se um deles falhar, os outros não são afetados.
+
+### Se a função não achar o pacote
+
+Os nomes dos arquivos mudam de vez em quando entre versões. Listar o que a versão mais recente oferece (trocar `dono/repo`):
+
+```zsh
+curl -fsSL https://api.github.com/repos/dono/repo/releases/latest | grep browser_download_url
+```
+
+Escolher o arquivo de Linux x86_64 e repetir o `instala` com um trecho do nome dele como padrão.
+
+A API do GitHub aceita 60 consultas por hora por endereço IP, e numa rede corporativa todo mundo sai pelo mesmo IP. Se der erro de limite, baixar o arquivo pela página de releases do projeto no navegador, extrair e copiar o binário para `~/.local/bin`.
+
+## 5. Ativar no shell
+
+No `~/.zshrc`:
+
+```zsh
+source <(fzf --zsh)
+eval "$(zoxide init zsh)"
+alias cat="bat --paging=never"
+```
+
+Se o shell do trabalho for bash, no `~/.bashrc`:
+
+```bash
+eval "$(fzf --bash)"
+eval "$(zoxide init bash)"
+alias cat="bat --paging=never"
+```
+
+Recarregar:
+
+```zsh
+source ~/.zshrc
+```
+
+Baixar os exemplos do tldr (usa o proxy das variáveis de ambiente):
+
+```zsh
+tldr --update
+```
+
+Usar o delta no git:
+
+```zsh
+git config --global core.pager delta
+```
+
+```zsh
+git config --global delta.side-by-side true
+```
+
+## 6. Uso rápido
+
+| Ferramenta | Para que serve | Exemplo |
+|---|---|---|
+| fzf | busca aproximada | `Ctrl+R` no histórico, `Ctrl+T` em arquivos, `Alt+C` em pastas |
+| zoxide | `cd` que aprende as pastas | `z projeto` |
+| tldr | exemplos práticos de comandos | `tldr tar` |
+| bat | `cat` com cores e número de linha | `bat arquivo.kt` |
+| rg | busca texto dentro de arquivos | `rg "TODO" src/` |
+| fd | busca arquivos pelo nome | `fd relatorio` |
+| btop | monitor de CPU, memória e processos | `btop` |
+| delta | `git diff` colorido | `git diff` |
+
+## 7. Ler a CPU no btop
+
+- **Barra `CPU`**: uso total, somando todos os núcleos.
+- **Linhas C0, C1...**: uso e temperatura de cada núcleo lógico. Um programa de núcleo único pode travar uma linha em 100% com o total ainda baixo.
+- **Load avg**: tarefas usando ou esperando CPU no último 1, 5 e 15 minutos. Abaixo do número de núcleos, tem folga. Acima, tem fila.
+- **Temperatura**: até 65°C é repouso, 70°C a 90°C é carga pesada, perto de 100°C o processador reduz a velocidade.
+
+Teclas: `q` sai, setas laterais mudam a ordenação, `f` filtra, `e` mostra em árvore, `k` encerra o processo selecionado, `1` a `4` escondem cada bloco.
+
+Sinais de máquina sofrendo: CPU perto de 100% por muito tempo, memória "Available" perto de zero, swap subindo.
+
+## 8. Atualizar e remover
+
+Atualizar uma ferramenta é rodar o mesmo `instala` de novo.
+
+Remover uma ferramenta:
+
+```zsh
+\rm ~/.local/bin/btop
+```
+
+Ver tudo que foi instalado:
+
+```zsh
+ls -l ~/.local/bin
+```
+
+Ao remover fzf, zoxide ou bat, apagar também as linhas correspondentes do `.zshrc`, senão o shell reclama ao abrir.
