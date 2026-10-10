@@ -372,3 +372,156 @@ echo "$EZA_COLORS $LS_COLORS"
 ```
 
 **Ícones do `ls` como quadradinhos.** A fonte não tem os símbolos. Instalar uma Nerd Font e selecioná-la no perfil, ou tirar o `--icons` dos aliases do `eza`.
+
+....
+
+# Atalho global para abrir o Terminator
+
+Cria um atalho de teclado do GNOME que abre uma janela do Terminator de qualquer lugar do sistema. Nenhum comando precisa de `sudo`, e todos funcionam em bash e em zsh.
+
+## 1. Pré-requisitos
+
+Conferir se o Terminator está instalado (deve mostrar um caminho):
+
+```zsh
+command -v terminator
+```
+
+Conferir se o ambiente é GNOME (deve conter `GNOME`):
+
+```zsh
+echo $XDG_CURRENT_DESKTOP
+```
+
+## 2. Criar o atalho
+
+Rodar os blocos na mesma janela do terminal, na ordem.
+
+Definir as variáveis:
+
+```zsh
+base=org.gnome.settings-daemon.plugins.media-keys
+novo=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/terminator/
+```
+
+Ver os atalhos personalizados que já existem:
+
+```zsh
+gsettings get $base custom-keybindings
+```
+
+Adicionar o novo à lista, mantendo os que já existem:
+
+```zsh
+atual=$(gsettings get $base custom-keybindings)
+if [[ "$atual" == "@as []" || "$atual" == "[]" ]]; then
+  gsettings set $base custom-keybindings "['$novo']"
+elif [[ "$atual" != *"$novo"* ]]; then
+  gsettings set $base custom-keybindings "${atual%]}, '$novo']"
+fi
+```
+
+Dar um nome ao atalho:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo name 'Terminator'
+```
+
+Definir o comando:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo command 'terminator'
+```
+
+Definir a combinação de teclas:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo binding '<Control><Shift>t'
+```
+
+## 3. Conferir
+
+A lista deve conter o caminho terminado em `/terminator/`:
+
+```zsh
+gsettings get $base custom-keybindings
+```
+
+Deve mostrar `'<Control><Shift>t'`:
+
+```zsh
+gsettings get $base.custom-keybinding:$novo binding
+```
+
+Deve mostrar `'terminator'`:
+
+```zsh
+gsettings get $base.custom-keybinding:$novo command
+```
+
+Testar apertando o atalho com o foco fora do terminal (no navegador ou na área de trabalho). A mudança vale na hora e continua depois de reiniciar.
+
+## 4. Ajustes
+
+Trocar a combinação para `Ctrl+Alt+T`:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo binding '<Control><Alt>t'
+```
+
+Abrir com a moldura da janela escura:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo command 'env GTK_THEME=Adwaita:dark terminator'
+```
+
+Abrir maximizado:
+
+```zsh
+gsettings set $base.custom-keybinding:$novo command 'terminator -m'
+```
+
+Nomes das teclas: `<Control>`, `<Shift>`, `<Alt>`, `<Super>`, seguidos da letra em minúsculo. Enter é `Return`.
+
+## 5. Conflitos
+
+O atalho global tem prioridade sobre os programas. Com `Ctrl+Shift+T`, deixam de funcionar:
+
+- "reabrir aba fechada" no navegador;
+- "nova aba" no terminal nativo e no próprio Terminator.
+
+`Ctrl+Alt+T` não conflita com nada e é o atalho tradicional de abrir terminal no Linux.
+
+## 6. Desativar
+
+Tirar a combinação de teclas (o atalho continua cadastrado, mas sem tecla):
+
+```zsh
+gsettings set $base.custom-keybinding:$novo binding ''
+```
+
+Para apagar de vez, usar a interface: Configurações > Teclado > Ver e personalizar atalhos > Atalhos personalizados.
+
+## 7. Problemas
+
+**As variáveis sumiram.** `base` e `novo` só existem na janela onde foram definidas. Em outra janela, rodar de novo o bloco "Definir as variáveis".
+
+**O atalho abre outra coisa.** Conferir se a combinação gravada é a mesma que está sendo apertada:
+
+```zsh
+gsettings get $base.custom-keybinding:$novo binding
+```
+
+**Os comandos não gravam.** Em máquina corporativa a configuração pode estar bloqueada por política. Conferir (deve responder `true`):
+
+```zsh
+gsettings writable $base custom-keybindings
+```
+
+Se responder `false`, o atalho só pode ser criado pela equipe que administra a máquina.
+
+**Nada acontece ao apertar.** Testar o comando direto no terminal para ver se há erro:
+
+```zsh
+terminator
+```
